@@ -16,39 +16,37 @@ class TaskManager {
     
     private List<Task> loadTask(){
         List<Task> storedTasks = new ArrayList<>();
-        if(!Files.exists(PATH)){
-            return storedTasks;
-        }
-        try {
-            String tasksString = Files.readString(PATH);
-            String[] tasksArray = tasksString.replace("[", "")
-                                .replace("]", "").split("},");
-
-            for (String task : tasksArray) {
-                if(!task.endsWith("}")){
-                    task = task + "}";
-                    storedTasks.add(Task.fromJson(task));
+        if(Files.exists(PATH)){
+            try {
+                String tasksString = Files.readString(PATH);
+                tasksString = tasksString.replace("[", "").replace("]","");
+                if (!tasksString.isEmpty()) {
+                    String[] tasksArray = tasksString.split("},");
+                    for (String task : tasksArray) {
+                        if(!task.endsWith("}")){
+                            task = task + "}";
+                            storedTasks.add(Task.fromJson(task));
+                        }
+                        else {
+                            storedTasks.add(Task.fromJson(task));
+                        }
+                    }
                 }
-                else {
-                    storedTasks.add(Task.fromJson(task));
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        }catch(IOException e){
-            e.printStackTrace();
         }
-        return storedTasks;    
+        return storedTasks;
     }
     
     public void saveTasks(){
         String json = "";
-        for (Task task : tasks) {
-            json = json + task.toJson() + ",\n";
+
+        if (!tasks.isEmpty()) {
+            for (Task task : tasks)
+                json = json + task.toJson() + ",\n";
+            json = json.substring(0, json.length() - 2) + "\n";
         }
-        if (json.endsWith(",\n")){
-            json = json.substring(0, json.length() - 2);
-            json = json + "\n";
-        }
-        
         json = "[" + json +"]";
         
         try{
@@ -103,7 +101,6 @@ class TaskManager {
         }
 
         for (Task task : this.tasks) {
-            String status = task.getState().toString();
             if (type.equals("all") || task.getState().equals(filteredStatus)) {
                 System.out.println(task);
             }
@@ -111,15 +108,20 @@ class TaskManager {
     }
     
     private Task findTask(String id){
+        Task taskfound = null;
         try {
             for (Task task : tasks) {
-                if(task.getId() == Integer.parseInt(id))
-                    return task;
+                if (task.getId() == Integer.parseInt(id)) {
+                    taskfound = task;
+                    break;
+                }
             }
-            System.out.println("That id does not exist.");
+            if (taskfound == null) {
+                System.out.printf("Task with id %s doesn't exist.\n", id);
+            }
         } catch (NumberFormatException e) {
             System.err.println("That task doesn't exists. " + e.getMessage());
         }
-        return null;
+        return taskfound;
     }
 }

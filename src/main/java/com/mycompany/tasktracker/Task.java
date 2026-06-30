@@ -51,23 +51,40 @@ class Task {
     }
 
     public String toJson(){
-        return "{ \"id\" : " + this.id + " ,\n"
+        return "{ \"id\" : " + this.id + ",\n"
                 + " \"description\" : \"" + this.description + "\",\n"
                 + " \"state\" : \"" + this.state+ "\",\n"
                 + " \"createAt\" : \"" + this.createAt + "\",\n"
                 + " \"updateAt\" : \"" + this.updateAt +"\" }";
     }
 
-    public static Task fromJson(String json){
-        
-        String[] values = json.replace("{", "").replace("}", "")
-                            .replace("\"", "").split(",");
-        
-        String id = values[0].split(":")[1].strip();
-        String description = values[1].split(":")[1].strip();
-        String state = values[2].split(":")[1].strip();
-        String createAtString = values[3].split("[a-z] :")[1].strip();
-        String updateAtString = values[4].split("[a-z] :")[1].strip();
+    public static <Char> Task fromJson(String json){
+        String keyValuePairs = json.replace("{", "")
+                .replace("}", "");
+
+        //Process to split pairs
+        boolean isIntoString = false;
+        String[] pairs = new String[5];
+        int index = 0, begin = 0;
+        char[] charArray = keyValuePairs.toCharArray();
+
+        for (int i = 0; i < charArray.length; i++) {
+            if (charArray[i] == '\"') {
+                isIntoString = !isIntoString;
+            } else if (isIntoString == false && charArray[i] == ',') {
+                pairs[index] = keyValuePairs.substring(begin, i)
+                        .replace("\"","");
+                index++;
+                begin = i + 1;
+            }
+        }
+        pairs[index] = keyValuePairs.substring(begin).replace("\"","");
+
+        String id = pairs[0].split(":")[1].strip();
+        String description = pairs[1].split(":")[1].strip();
+        String state = pairs[2].split(":")[1].strip();
+        String createAtString = pairs[3].split("[a-z] :")[1].strip();
+        String updateAtString = pairs[4].split("[a-z] :")[1].strip();
         
         Status taskStatus = Status.valueOf(Status.class,
                 state.toUpperCase().replace(" ", "_"));
@@ -88,6 +105,10 @@ class Task {
 
     @Override
     public String toString(){
-        return String.format("%-3d %-20s %-13s %-35s %-35s", id, description, state, createAt, updateAt);
+        String fDescription = this.description;
+        if (fDescription.length() > 30) {
+            fDescription = description.substring(0, 20) + "...";
+        }
+        return String.format("%-3d %-30s %-13s %-35s %-35s", id, fDescription, state, createAt, updateAt);
     }
 }
